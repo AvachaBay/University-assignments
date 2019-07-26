@@ -1,264 +1,152 @@
 from scipy.optimize import linprog
+from math import fabs
+# from inspect import getfullargspec
+#
+n=4
 
-# Входные данные
+def coefficients_into_an_equation(List):
+	"""
+	Превращение массива коэффициентов в полноценный 
+	текстовый вид (уравнение)
+	"""
+	out=''
 
-#	Коэффициенты в целевой функции
-c = [40, 30, 1.5*15, 160 , 150 , 4*35, 350, 240, 150]
+	#Вычисление индекса первого и последнего вхождения числа отличного от (!=)0
+	last_index=len(List)
+	first_index=-1
 
-print('Целевая функция:')
-goalstring=''
-for index,elements in enumerate(c):
-	if elements<0:
-		goal='max'
-	else:
-		goal='min'
-	if elements!=0: 
-		if elements>1:
-			goalstring+=str(elements)+'*'
-		goalstring+='x'+str(index)
-		goalstring+='+'
+	for i in range(last_index):
+		if not List[i]==0:
+			if first_index==-1:
+				first_index=i
+			last_index=i
 
-print(goalstring[:-1]+'->'+goal)
-#	Коэффициенты ограничений
-A_ub = [[1, 1, 1, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 1, 1, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 1, 1]]
-b_ub = [200, 180, 250]
-A_eq =[[20, 0, 0, 40, 0, 0, 50, 0, 0], [0, 10, 0, 0, 30, 0, 0, 40, 0],[0, 0, 15, 0, 0, 32, 0, 0 ,30]]
-b_eq= [6000, 5000, 5600]
+	# testing results of for cycle
+	# print('first={0},last=={1}'.format(first_index,last_index))
+	
+	#Основной  цикл
+	i=0
+	for element in List:
+		if element!=0:
 
-print('\nОграничения:')
-for i in range(len(A_ub)):
-	outstr=''
-	for i_x in range(len(A_ub[1])):
-		if A_ub[i][i_x]>0:
-			if A_ub[i][i_x]>1:
-				outstr+='+'+str(A_ub[i][i_x])+'*x'+str(i_x)
+			if not i==first_index and element>0:
+				out+='+'
+
+			if element==-1:
+				out+='-'
+
+			if fabs(element)!=1:
+				out+=str(element)+'*'
+
+			out+='x'+str(i)
+
+		i+=1
+
+	return out
+
+
+
+	# #Вариант №2
+	# out=''
+	# for index,element in enumerate(List):
+	# 	if element>0:
+	# 		if element>1:
+	# 			out+=str(element)+'*'
+	# 		out+=str(element)
+	# 		out+=str(index)
+
+
+	# #вариант №3
+	# n=len(List)
+	# for i in range(n):
+	# 	if List[i]>0:
+	# 		if List[i]>1:
+	# 			out+=str(List[i])+'*'
+	# 		out+=List[i]
+
+
+def str_inequality_system(A_ub, b_ub, A_eq, b_eq):
+	"""
+	Превращает входные массивы коэффициентов в полноценную систему ограничений
+	состоящей из множества уравнений с помощью функции coefficients_into_an_equation
+	"""
+	inequality_system=[[A_ub,b_ub],[A_eq,b_eq]]
+
+	# # Код для определения имен, передаваемых в функцию
+	# full=getfullargspec(str_inequality_system)
+	# names=full[0]
+	# print(names)
+
+	out=''
+	i=0
+	#Проход по видам ограничений : неравенства и уравнения
+	for i in range(2):
+		#Проход уравнениям определенного ограничения
+		for k in range(len(inequality_system[i][0])):
+			# out=''
+			out+=coefficients_into_an_equation(inequality_system[i][0][k])
+
+			if inequality_system[i][1]==A_ub:
+				out+='=>'
 			else:
-				outstr+='+x'+str(i_x)
-	outstr+='<='+str(b_ub[i])
-	print(outstr)
-	outstr=''
+				out+='='
 
-for i in range(len(A_eq)):
-	outstr=''
-	for i_x in range(len(A_eq[1])):
-		if A_eq[i][i_x]>0:
-			if A_eq[i][i_x]>1:
-				outstr+='+'+str(A_eq[i][i_x])+'*x'+str(i_x)
-			else:
-				outstr+='x'+str(i_x)
-	outstr+='='+str(b_eq[i])
-	print(outstr)
-	outstr=''
+				out+=str(inequality_system[i][1][k])+'\n'
+			# print(out)
+
+	return out
 
 
-# Преобразование в каноническую форму
-# Формирование симплексной таблицы
-# Вычисление симплекс методом
-res = linprog(c, A_ub, b_ub, A_eq, b_eq)
+# Основной цикл работы программы
+for i in range(n):
+	print('{0:_^20}'.format(i))
 
-# Вывод результатов
-result=res['x']
-value_f=0
-for i,e in enumerate(result):
-	result[i]=round(e,2)
-	# if i==7 or i==8:
-	# 	result[7]=201
-	# 	result[8]=49
-	value_f+=result[i]*c[i]
-print('\nОптимальное решение:\nx={0}'.format(result))
-print ('\nЗначение целевой функции:\nf(x)={0}'.format(value_f))
-input()
+	# Обнуление массивов
+	c = []	
+	A_ub = []
+	b_ub = []
+	A_eq = []
+	b_eq = []
 
-# Входные данные
+	# Массивы входных данных
+	if i==0 :
+		#	Коэффициенты в целевой функции
+		c = [40, 30, 1.5*15, 160 , 150 , 4*35, 350, 240, 150]
+		#	Коэффициенты ограничений
+		A_ub = [[1, 1, 1, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 1, 1, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 1, 1]]
+		b_ub = [200, 180, 250]
+		A_eq =[[20, 0, 0, 40, 0, 0, 50, 0, 0], [0, 10, 0, 0, 30, 0, 0, 40, 0],[0, 0, 15, 0, 0, 32, 0, 0 ,30]]
+		b_eq= [6000, 5000, 5600]
 
-#	Коэффициенты в целевой функции
-c = [-20, -10, -15, -40, -30, -35, -50, -40, -30]
+	if i==1:
+		c = [-20, -10, -15, -40, -30, -35, -50, -40, -30]	
+		A_ub = [[1, 1, 1, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 1, 1, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 1, 1]]
+		b_ub = [200, 180, 250]
 
-print('Целевая функция:')
-goalstring=''
-for index,elements in enumerate(c):
-	if elements<0:
-		goal='max'
-	else:
-		goal='min'
-	if elements!=0: 
-		if -elements>1:
-			goalstring+=str(-elements)+'*'
-		goalstring+='x'+str(index)
-		goalstring+='+'
+	if i==2:
+		c = [0, 0, 0, 0, 0, 0, 0, 0, 0, -1]	
+		A_ub = [[1, 1, 1, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 1, 1, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 1, 1, 0],[20, 0, 0, 40, 0, 0, 50, 0, 0, -2/9]]
+		b_ub = [200, 180, 250, 0]
+		A_eq =[[0, 10, 0, 0, 30, 0, 0, 40, 0, -1/3],[0, 0, 15, 0, 0, 35, 0, 0 ,30, -4/9]]
+		b_eq= [0, 0]
 
-print(goalstring[:-1]+'->'+goal)
-
-#	Коэффициенты ограничений
-A_ub = [[1, 1, 1, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 1, 1, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 1, 1]]
-b_ub = [200, 180, 250]
-
-print('\nОграничения:')
-for i in range(len(A_ub)):
-	outstr=''
-	for i_x in range(len(A_ub[1])):
-		if A_ub[i][i_x]>0:
-			if A_ub[i][i_x]>1:
-				outstr+='+'+str(A_ub[i][i_x])+'*x'+str(i_x)
-			else:
-				outstr+='+x'+str(i_x)
-	outstr+='<='+str(b_ub[i])
-	print(outstr)
-	outstr=''
+	if i==3:
+		c = [-1, -1, -1, -1, -1, -1, -1, -1, -1]
+		A_ub = [[1, 1, 1, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 1, 1, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 1, 1]]
+		b_ub = [200, 180, 250]
+		A_eq = [[20, 0, 0, 40, 0, 0, 50, 0, 0], [0, 10, 0, 0, 30, 0, 0, 40, 0],[0, 0, 15, 0, 0, 35, 0, 0 ,30]]
+		b_eq = [6000, 5000, 5600]
 
 
-# Преобразование в каноническую форму
-# Формирование симплексной таблицы
-# Вычисление симплекс методом
-res = linprog(c, A_ub, b_ub)
+	# Определение цели оптимизации (мин, макс)
+	for c_elements in c:
+		goal = 'min' if c_elements > 0 else 'max'
 
+	# Вывод целевой функции
+	out=coefficients_into_an_equation(c)
+	print(out+' --> '+goal)
 
-# Вывод результатов
-result=res['x']
-value_f=0
-for i,e in enumerate(result):
-	result[i]=round(e,2)
-	# if i==7 or i==8:
-	# 	result[7]=201
-	# 	result[8]=49
-	value_f+=result[i]*c[i]
-print('\nОптимальное решение:\nx={0}'.format(result))
-print ('\nЗначение целевой функции:\nf(x)={0}'.format(-value_f))
-input()
+	# Вывод системы ограничений
+	out=str_inequality_system(A_ub, b_ub, A_eq, b_eq)
+	print(out)
 
-
-# Входные данные
-
-#	Коэффициенты в целевой функции
-c = [-1, -1, -1, -1, -1, -1, -1, -1, -1]
-
-print('Целевая функция:')
-goalstring=''
-for index,elements in enumerate(c):
-	if elements<0:
-		goal='max'
-	else:
-		goal='min'
-	if elements!=0: 
-		goalstring+='+x'+str(index)
-		if elements>1:
-			goalstring+='*'+str(-elements)
-print(goalstring+'->'+goal)
-
-
-#	Коэффициенты ограничений
-A_ub = [[1, 1, 1, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 1, 1, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 1, 1]]
-b_ub = [200, 180, 250]
-
-A_eq =[[20, 0, 0, 40, 0, 0, 50, 0, 0], [0, 10, 0, 0, 30, 0, 0, 40, 0],[0, 0, 15, 0, 0, 35, 0, 0 ,30]]
-b_eq= [6000, 5000, 5600]
-
-
-print('\nОграничения:')
-for i in range(len(A_ub)):
-	outstr=''
-	for i_x in range(len(A_ub[1])):
-		if A_ub[i][i_x]>0:
-			if A_ub[i][i_x]>1:
-				outstr+='+'+str(A_ub[i][i_x])+'*x'+str(i_x)
-			else:
-				outstr+='+x'+str(i_x)
-	outstr+='<='+str(b_ub[i])
-	print(outstr)
-	outstr=''
-
-for i in range(len(A_eq)):
-	outstr=''
-	for i_x in range(len(A_eq[1])):
-		if A_eq[i][i_x]>0:
-			if A_eq[i][i_x]>1:
-				outstr+='+'+str(A_eq[i][i_x])+'*x'+str(i_x)
-			else:
-				outstr+='x'+str(i_x)
-	outstr+='='+str(b_eq[i])
-	print(outstr)
-	outstr=''
-
-# Преобразование в каноническую форму
-# Формирование симплексной таблицы
-# Вычисление симплекс методом
-res = linprog(c, A_ub, b_ub, A_eq, b_eq)
-
-# Вывод результатов
-result=res['x']
-value_f=0
-for i,e in enumerate(result):
-	result[i]=round(e,2)
-	value_f+=result[i]*c[i]
-print('\nОптимальное решение:\nx={0}'.format(result))
-print ('\nЗначение целевой функции:\nf(x)={0}'.format(-value_f))
-input()
-
-# Входные данные
-
-#	Коэффициенты в целевой функции
-c = [0, 0, 0, 0, 0, 0, 0, 0, 0, -1]
-
-print('Целевая функция:')
-goalstring=''
-for index,elements in enumerate(c):
-	if elements<0:
-		goal='max'
-	else:
-		goal='min'
-	if elements!=0: 
-		goalstring+='+x'+str(index)
-		if elements>1:
-			goalstring+='*'+str(-elements)
-print(goalstring+'->'+goal)
-
-#	Коэффициенты ограничений
-A_ub = [[1, 1, 1, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 1, 1, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 1, 1, 0],[20, 0, 0, 40, 0, 0, 50, 0, 0, -2/9]]
-b_ub = [200, 180, 250, 0]
-
-A_eq =[[0, 10, 0, 0, 30, 0, 0, 40, 0, -1/3],[0, 0, 15, 0, 0, 35, 0, 0 ,30, -4/9]]
-b_eq= [0, 0]
-
-print('\nОграничения:')
-for i in range(len(A_ub)):
-	outstr=''
-	for i_x in range(len(A_ub[1])):
-		if A_ub[i][i_x]!=0:
-			if A_ub[i][i_x]!=1:
-				outstr+='+'+str(round(A_ub[i][i_x],2))+'*x'+str(i_x)
-			else:
-				outstr+='+x'+str(i_x)
-	outstr+='<='+str(b_ub[i])
-	print(outstr)
-	outstr=''
-
-for i in range(len(A_eq)):
-	outstr=''
-	for i_x in range(len(A_eq[1])):
-		if A_eq[i][i_x]!=0:
-			if A_eq[i][i_x]>1:
-				outstr+='+'+str(A_eq[i][i_x])+'*x'+str(i_x)
-			else:
-				outstr+=''+str(round(A_eq[i][i_x],2))+'*x'+str(i_x)
-	outstr+='='+str(b_eq[i])
-	print(outstr)
-	outstr=''
-
-
-# Преобразование в каноническую форму
-# Формирование симплексной таблицы
-# Вычисление симплекс методом
-res = linprog(c, A_ub, b_ub, A_eq, b_eq)
-
-# Вывод результатов
-result=res['x']
-value_f=0
-for i,e in enumerate(result):
-	result[i]=round(e,2)
-	# if i==7 or i==8:
-	# 	result[7]=201
-	# 	result[8]=49
-	value_f+=result[i]*c[i]
-print('\nОптимальное решение:\nx={0}'.format(result))
-print ('\nЗначение целевой функции:\nf(x)={0}'.format(-value_f))
-input()
