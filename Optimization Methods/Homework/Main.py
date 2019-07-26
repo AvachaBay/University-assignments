@@ -1,13 +1,22 @@
 import sys
-from Newtone import * 
-
+from Methods import Golden_section, Quadratic_approximation
+#from Methods.Golden_section import main
+import Newtone
 # точка x = 0.451 точка минимума функции. 
 
 print("###Установление границ________________________________________________")
 
 #Функция 
-def f(x):
-	return 3*x**4 + (x-1)**2
+
+# Вариант №1
+# def f(x):
+# 	return 3*x**4 + (x-1)**2
+# Вариант №2
+# f = lambda x: 3*x**4 + (x-1)**2[]
+# Вариант №3
+equation='3*x**4 + (x-1)**2'
+f = lambda x: eval(equation)
+
 
 # Вычисление соседних точек с x0 
 h=0.5
@@ -64,121 +73,15 @@ print('X конеч.=',x[-3:])
 
 emptystrings='\n\n\n\n'
 print(emptystrings+'###Golden section method____________________________________________________________')
-
-#Значения для данного метода берутся из результатов прошлого этапа
 xn=x[len(x)-1]
 xk=x[len(x)-3]
-#Расчет коэффициентов для преобразования в x->y и обратно
-b=xn
-a=xk-xn
-print("x={0}*y+{1}".format(a,b))
+Golden_section.main(f,xn,xk)
 
-#Пересчет функции с учётом подстановки результатов прошлого шага вместо x
-def fy(y,a=a,b=b):
-	return f(a*y+b)
-
-teta=(5**(1/2)-1)/2
-
-#Вывод начального интервала
-y=[0,1-teta,teta,1]
-print('Начальный интервал = ',y)
-
-l=1  #Переменная отвечающая за длину отрезка
-i=0  #счетчик итераций
-
-#Основной цикл
-while abs(fy(y[1])-fy(y[2]))>10**(-5) and i!=20:
- 	
-	if fy(y[1])>fy(y[2]):
-		print ('f({0:.3})={1:.3} > f({2:.3})={3:.3}'.format(y[1],fy(y[1]),y[2],fy(y[2])))
-		y[0]=y[1]
-		y[1]=y[2]
-		l=y[3]-y[0]
-		y[2]=y[3]-(1-teta)*l
-		print ('Следующая точка y=',y[2])
-	else:
-		print ('f({0:.3})={1:.3} < f({2:.3})={3:.3}'.format(y[1],fy(y[1]),y[2],fy(y[2])))
-		y[3]=y[2]
-		y[2]=y[1]
-		l=y[3]-y[0]
-		y[1]=y[0]+(1-teta)*l
-		print ('Следующая точка y={0:.3}'.format(y[1]))
-
-	if abs(fy(y[1])-fy(y[2]))<10**(-5):
-		print('Достигнута разница между значениями менее 0.00001 за количество итераций = ',i)
-		print('')
-
-	#Вывод интервала с необходимым количеством знаков после запятой = 33 
-	P=[]
-	P=[round(v,3) for v in y] 
-	print('Полученный интервал ',P)
-	i+=1
-
-#Вывод интервала с необходимым количеством знаков после запятой = 33 
-x=[round(e*a+b,3) for e in y]
-print('Итоговый интервал для x ',x)
-
-print(emptystrings+'Квадратичная аппроксимация')
-#Граничные точки для х берутся из этапа установления границ
-a=[0,0,0]
-x=[xn,(xk+xn)/2,xk]
-print('Начальный массив точек x=',x)
-
-#Вычисление значений функции в начальных точках и их вывод
-str1=''
-str1='Значения функции в начальных точках соответственно ='
-f_val=[]
-for i, e in enumerate(x):
-	f_val.append(f(e))
-	str1+=' '+str(round(f_val[i],3))
-f_val.append(0)
-print(str1)
-
-#Поиск индекса максимального значения функции для последующей сортировки
-imax=f_val.index(max(f_val))
-
-
-#Подпрограмма вычисления х_
-def x_calculation(f_val):
-	a[0]=f_val[0]
-	a[1]=(f_val[1]-f_val[0])/(x[1]-x[0])
-	a[2]=1/(x[2]-x[1])*((f_val[2]-f_val[0])/(x[2]-x[0])-a[1])
-	return ((x[0]+x[1])/2-a[1]/(2*a[2]))
-
-i=0 
-#Основной цикл
-while i!=20 and (abs(f_val[0]-f_val[1]) and abs(f_val[1]-f_val[2]))>10**(-5) :
-	print ('\nИтерация #',i)
-	x_=x_calculation(f_val)
-	f_val[3]=(f(x_))
-	print('Значение функции в точке х_   f({0:.3})={1:.3}'.format(x_,f_val[3]))
-
-	#Поиск максимального значения функции и замена соответсвующего ему х
-	imax=f_val.index(max(f_val))
-	if f_val[3]!=max(f_val):
-		print('Отбрасываем точку x={0:.3} со значением f(x)={1:.4}'.format(x[imax],max(f_val)))
-		x[imax]=x_
-
-	#Сортировка значений х и соответствующих им значений функции
-	x.sort()
-	for index,e in enumerate(x):
-		if f_val[index]!=f(e):
-			f_val[index]=f(e)
-
-
-	if (abs(f_val[0]-f_val[1]) and abs(f_val[1]-f_val[2]))<10**(-5):
-		print('Достигнута разница между значениями менее 0.00001 за количество итераций = ',i)
-		print('')
-	
-
-	#Вывод значений в необходимом формате
-	P=[round(elem,3) for elem in x]
-	f_print=[round(elem,3) for elem in f_val]
-	print('Полученный массив x={0}\nЗначения функции соответсвенно f={1}'.format(P,f_print))
-	i+=1
-
+print(emptystrings+'Квадратичная аппроксимация______________________________________')
+Quadratic_approximation.main(f,xn,xk)
 
 print(emptystrings+'Newtone method____________________________________________________________')
-Newtone(2)
+# Newtone.main(-3,2)
+
 
 input(emptystrings+'Нажмите Enter для выхода\n')
